@@ -1,0 +1,79 @@
+server:
+  port: 8585
+
+
+spring:
+
+  # database migration
+  flyway:
+    baseline-on-migrate: true
+    locations: "classpath:db/migration"
+    validate-on-migrate: false
+    out-of-order: true
+
+  # enhance development
+  devtools:
+    reload:
+      trigger-file: .reloadtrigger
+    restart:
+      exclude: "static/**,public/**"
+
+
+  # database config
+  datasource:
+    #containername:3306
+    url: jdbc:mysql://localhost:3306/world_cup?useSsl=true&serverTimezone=UTC
+    #username and password in the container
+    username: root
+    password: Mosstafalover999$
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # jpa config
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+      use-new-id-generator-mappings: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        formate_sql: true
+
+  data:
+    rest:
+      base-path: /api
+
+  mvc:
+    pathmatch:
+      matching-strategy: ant-path-matcher
+
+  security:
+    user:
+      name: mostafa
+
+management:
+  endpoint:
+    health:
+      enabled: true
+    info:
+      enabled: true
+  server:
+    port: 
+
+application-description: 'World Cup Ticket Reservation'
+application-version: 1.0.0
+
+
+
+
+#okta:
+#  oauth2:
+#    client-id: 0oa7rwsfxudacn6wp5d7
+#    issuer: https://dev-52007706.okta.com/oauth2/default
+#    client-secret: RN76V8KB17OUPUJIVhhp3WAKzv3SCx1IyB_RCTHw
+
+
+security:
+  secret_key: world_cup
+  bearer: Bearer
+
