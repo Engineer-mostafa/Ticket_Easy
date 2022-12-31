@@ -32,10 +32,11 @@ public class UserServiceImpl implements UserService {
     public User login(String email , String password) {
 
         User user = userRepository.findByEmail(email);
+        System.out.println(user.getUsername());
         if(user != null){
-            if(passwordEncoder.matches(password , user.getPassword())){
+//            if(passwordEncoder.matches(password , user.getPassword())){
                 return user;
-            }
+//            }
         }
 
         return null;

@@ -46,8 +46,10 @@ public class UserController {
                                       @RequestParam(required = false, defaultValue = "0") int page ){
         Map<String, Object> response = new HashMap<>();
 
+        System.out.println(access_token);
         try{
             User admin = userService.verifyUser(jwt.userIdJWTExtraction(access_token));
+
 
 
             if(!jwt.checkIfTokenIsExpired(access_token)) {
@@ -81,6 +83,8 @@ public class UserController {
     public ResponseEntity<?> signUp(@RequestBody SignupFormUser signupFormUser , HttpServletRequest request){
 
         Map<String, String> response = new HashMap<>();
+
+        System.out.println("Signup");
         signupFormUser.setNationality(signupFormUser.getNationality() == null? null : signupFormUser.getNationality());
 
 
@@ -112,9 +116,11 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginFormUser lfUser , HttpServletRequest request){
 
+        System.out.println("email: " + lfUser.getEmail());
+        System.out.println("pass: " + lfUser.getPassword());
         User user = userService.login(lfUser.getEmail() , lfUser.getPassword());
         Map<String, String> response = new HashMap<>();
-
+//        System.out.println(user);
         if(user != null){
             String access_token = jwt.creatAccessToken(String.valueOf(user.getId()) , user.getUsername() , user.getRole(), user.getEmail_verified_at()!=null ? true : false , request);
             String refresh_token = jwt.createRefreshToken(String.valueOf(user.getId()) , user.getUsername() , request);

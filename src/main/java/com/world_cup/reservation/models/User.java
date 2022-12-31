@@ -12,6 +12,7 @@ import java.util.Date;
 import java.util.List;
 
 import static javax.persistence.GenerationType.AUTO;
+import static javax.persistence.GenerationType.IDENTITY;
 
 
 /**
@@ -28,7 +29,7 @@ import static javax.persistence.GenerationType.AUTO;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = AUTO)
+    @GeneratedValue(strategy = IDENTITY)
     private Long id;
     @Column(name = "first_name")
     private String first_name;
@@ -60,9 +61,9 @@ public class User {
     private Date updated_at;
 
 
-    @OneToMany(mappedBy = "ticketId.user")
-    private List<Ticket> ticketList;
-
+//    @OneToMany(mappedBy = "ticketId.user")
+//    private List<Ticket> ticketList;
+//
 
 
 

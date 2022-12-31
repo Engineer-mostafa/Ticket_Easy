@@ -33,11 +33,11 @@ public class ExtractJWT {
     }
 
     public Long userIdJWTExtraction(String token){
-//        String tokenWithoutBearer = token.substring((secProperties.getBearer() + " ").length());
+        String tokenWithoutBearer = token.substring((secProperties.getBearer() + " ").length());
 
 
         JWTVerifier verifier = JWT.require(_algorithm).build();
-        DecodedJWT decodedJWT = verifier.verify(token);
+        DecodedJWT decodedJWT = verifier.verify(tokenWithoutBearer);
         String userId = decodedJWT.getClaim("id").toString();
 
         System.out.println(userId);
@@ -98,8 +98,10 @@ public class ExtractJWT {
 
 
     public boolean checkIfTokenIsExpired(String token){
+        String btoken = token.substring((secProperties.getBearer() + " ").length());
+
         JWTVerifier verifier = JWT.require(_algorithm).build();
-        DecodedJWT decodedJWT = verifier.verify(token);
+        DecodedJWT decodedJWT = verifier.verify(btoken);
         if (decodedJWT.getExpiresAt().before(new Date())){
             return true;
         }

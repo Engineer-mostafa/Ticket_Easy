@@ -34,13 +34,13 @@ public class SimpleCORSFilter implements Filter {
         response.setHeader("Access-Control-Max-Age", "3600");
 
 
-        if(request.getMethod() != "GET")
+//        if(request.getMethod() != "GET")
         response.setHeader("Access-Control-Allow-Headers", "access-control-allow-headers,access-control-allow-origin,access-control-allow-methods,Authorization, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers");
 
-         else {
-            response.setHeader("Access-Control-Allow-Headers", "access-control-allow-headers,access-control-allow-origin,access-control-allow-methods,Accept,Access-Control-Request-Headers");
-
-        }
+//         else {
+//            response.setHeader("Access-Control-Allow-Headers", "access-control-allow-headers,access-control-allow-origin,access-control-allow-methods,Accept,Access-Control-Request-Headers");
+//
+//        }
         response.setHeader("Content-Type","application/json");
         chain.doFilter(req, res);
     }
