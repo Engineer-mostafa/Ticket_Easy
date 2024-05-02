@@ -2,6 +2,7 @@ package com.world_cup.reservation.service;
 
 
 import com.world_cup.reservation.dao.UserRepository;
+import com.world_cup.reservation.models.EditModelUser;
 import com.world_cup.reservation.models.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -34,9 +35,9 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByEmail(email);
         System.out.println(user.getUsername());
         if(user != null){
-//            if(passwordEncoder.matches(password , user.getPassword())){
+            if(passwordEncoder.matches(password , user.getPassword())){
                 return user;
-//            }
+            }
         }
 
         return null;
@@ -62,11 +63,12 @@ public class UserServiceImpl implements UserService {
     public User verifyUser(Long userId) {
         Optional<User> opUser = userRepository.findById(userId);
 
-
+        System.out.println(opUser == null ? 100 : 0);
         if(opUser != null) {
             User user = opUser.get();
             user.setEmail_verified_at(new Date());
-            return user;
+            user.setUpdated_at(new Date());
+            return userRepository.save(user);
         }
 
         return null;
@@ -80,9 +82,24 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User updateMyData(User user) {
-        user.setUpdated_at(new Date());
-        return userRepository.save(user);
+    public User updateMyData(User actuslUser , EditModelUser updated) {
+
+        try {
+            actuslUser.setUpdated_at(new Date());
+            actuslUser.setNationality(updated.getNationality());
+            actuslUser.setRole(updated.getRole());
+            actuslUser.setEmail(updated.getEmail());
+            actuslUser.setGender(updated.getGender());
+            actuslUser.setFirst_name(updated.getFirst_name());
+            actuslUser.setLast_name(updated.getLast_name());
+            actuslUser.setBirth_date(updated.getBirth_date());
+            actuslUser.setUsername(updated.getUsername());
+
+            return userRepository.save(actuslUser);
+        }catch (Exception e){
+            return null;
+        }
+
     }
 
 

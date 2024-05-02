@@ -61,9 +61,9 @@ public class User {
     private Date updated_at;
 
 
-//    @OneToMany(mappedBy = "ticketId.user")
-//    private List<Ticket> ticketList;
-//
+    @OneToMany(mappedBy = "ticketId.user")
+    private List<Ticket> ticketList;
+
 
 
 

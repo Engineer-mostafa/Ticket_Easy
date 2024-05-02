@@ -29,35 +29,43 @@ public class TicketController {
     @GetMapping("/{matchId}")
     public ResponseEntity<?> getAllReservedSeats(@PathVariable(value = "matchId") Long matchId){
         Map<String, Object> response = new HashMap<>();
-        Match match = matchService.getMatchById(matchId);
-        if(match !=null){
-            List<Ticket> allTicketsInMatch = ticketService.getTicketsByMatchId(matchId);
-            if( allTicketsInMatch != null){
-                Map<Integer, Stack> seats = new HashMap<>();
-                for(int i =0; i < allTicketsInMatch.size();i++){
-                    int key = allTicketsInMatch.get(i).getSeat_row();
-                    int value = allTicketsInMatch.get(i).getSeat_number();
-                    if(seats.get(key) == null){
-                        seats.put(key, new Stack<>());
+
+        try{
+            Match match = matchService.getMatchById(matchId);
+            if(match !=null){
+                List<Ticket> allTicketsInMatch = ticketService.getTicketsByMatchId(matchId);
+                if( allTicketsInMatch != null){
+                    Map<Integer, Stack> seats = new HashMap<>();
+                    for(int i =0; i < allTicketsInMatch.size();i++){
+                        int key = allTicketsInMatch.get(i).getSeat_row();
+                        int value = allTicketsInMatch.get(i).getSeat_number();
+                        if(seats.get(key) == null){
+                            seats.put(key, new Stack<>());
+                        }
+                        seats.get(key).push(value);
                     }
-                    seats.get(key).push(value);
+                    response.put("response" , seats);
+                    response.put("message" , "these are all reserved seats");
+                    response.put("status" , "200");
+                    return new ResponseEntity<>(response, HttpStatus.OK);
+
                 }
-                response.put("response" , seats);
-                response.put("message" , "these are all reserved seats");
+
+                response.put("message" , "all seats are free for now");
                 response.put("status" , "200");
                 return new ResponseEntity<>(response, HttpStatus.OK);
 
             }
+            response.put("message" , "there is no match with this id");
+            response.put("status" , "404");
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
 
-            response.put("message" , "all seats are free for now");
-            response.put("status" , "200");
-            return new ResponseEntity<>(response, HttpStatus.OK);
 
+        }catch (Exception e){
+            response.put("message" , e.getMessage());
+            response.put("status" , "401");
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
         }
-        response.put("message" , "there is no match with this id");
-        response.put("status" , "404");
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-
 
 
     }
@@ -124,28 +132,35 @@ public class TicketController {
 
 
         Map<String, String> response = new HashMap<>();
-        if(!jwt.checkIfTokenIsExpired(access_token)) {
-            User fan = userService.verifyUser(jwt.userIdJWTExtraction(access_token));
-            if(fan != null && fan.getRole() == 2 && fan.getEmail_verified_at() != null){
-                boolean isDeleted = ticketService.deleteTicketById(ticketId);
-                if(isDeleted){
-                    response.put("message" , "Deleted Successfully");
-                    return new ResponseEntity<>(response, HttpStatus.OK);
+        try{
+            if(!jwt.checkIfTokenIsExpired(access_token)) {
+                User fan = userService.verifyUser(jwt.userIdJWTExtraction(access_token));
+                if(fan != null && fan.getRole() == 2 && fan.getEmail_verified_at() != null){
+                    boolean isDeleted = ticketService.deleteTicketById(ticketId);
+                    if(isDeleted){
+                        response.put("message" , "Deleted Successfully");
+                        return new ResponseEntity<>(response, HttpStatus.OK);
+                    }
+                    response.put("message" , "this ticket wasn't found");
+                    response.put("status" , "404");
+
+                    return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+
                 }
-                response.put("message" , "this ticket wasn't found");
+                response.put("message" , "this fan wasn't found or not verified yet");
                 response.put("status" , "404");
-
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-
             }
-            response.put("message" , "this fan wasn't found or not verified yet");
-            response.put("status" , "404");
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-        }
 
-        response.put("message" , "access token is expired please refresh it");
-        response.put("status" , "401");
-        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+            response.put("message" , "access token is expired please refresh it");
+            response.put("status" , "401");
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+
+        }catch (Exception e){
+            response.put("message" , e.getMessage());
+            response.put("status" , "401");
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+        }
 
     }
 

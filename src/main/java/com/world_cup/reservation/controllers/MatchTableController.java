@@ -34,34 +34,48 @@ public class MatchTableController {
                                            @RequestParam(required = false, defaultValue = "0") int page) {
 
         Map<String, Object> response = new HashMap<>();
-        List<Match> matches = IterableUtils.toList(matchService.getAllMatches(PageRequest.of(page, size)));
+        try{
+            List<Match> matches = IterableUtils.toList(matchService.getAllMatches(PageRequest.of(page, size)));
 
-        if (matches != null) {
-            response.put("message", "successful");
-            response.put("status", "200");
-            response.put("response", matches);
-            return new ResponseEntity<>(response, HttpStatus.OK);
+            if (matches != null) {
+                response.put("message", "successful");
+                response.put("status", "200");
+                response.put("response", matches);
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            }
+            response.put("message", "you are not admin user");
+            response.put("status", "404");
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }catch (Exception e){
+            response.put("message" , e.getMessage());
+            response.put("status" , "401");
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
         }
-        response.put("message", "you are not admin user");
-        response.put("status", "404");
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+
     }
 
 
     @GetMapping("/{matchId}")
     public ResponseEntity<?> getMatchById( @PathVariable("matchId") Long matchId) {
         Map<String, Object> response = new HashMap<>();
-        Match match = matchService.getMatchById(matchId);
+        try{
+            Match match = matchService.getMatchById(matchId);
 
-        if(match != null){
-            response.put("message", "successful");
-            response.put("status", "200");
-            response.put("response", match);
-            return new ResponseEntity<>(response, HttpStatus.OK);
+            if(match != null){
+                response.put("message", "successful");
+                response.put("status", "200");
+                response.put("response", match);
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            }
+            response.put("message", "Not found");
+            response.put("status", "404");
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+
+        }catch (Exception e){
+            response.put("message" , e.getMessage());
+            response.put("status" , "401");
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
         }
-        response.put("message", "Not found");
-        response.put("status", "404");
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
 
 
     }
@@ -72,22 +86,29 @@ public class MatchTableController {
     public ResponseEntity<?> createNewMatch(@RequestHeader(value = "Authorization") String access_token,
                                            @RequestBody CreateMatchForm matchForm) {
         Map<String, Object> response = new HashMap<>();
-        if(!jwt.checkIfTokenIsExpired(access_token)) {
-            User manager = userService.verifyUser(jwt.userIdJWTExtraction(access_token));
-            if (manager != null && manager.getRole() == 1 && manager.getEmail_verified_at() != null) {
-                Match match = matchService.saveNewMatch(matchForm);
-                response.put("message", "successful");
-                response.put("status", "200");
-                response.put("response", match);
-                return new ResponseEntity<>(response, HttpStatus.OK);
+        try{
+            if(!jwt.checkIfTokenIsExpired(access_token)) {
+                User manager = userService.verifyUser(jwt.userIdJWTExtraction(access_token));
+                if (manager != null && manager.getRole() == 1 && manager.getEmail_verified_at() != null) {
+                    Match match = matchService.saveNewMatch(matchForm);
+                    response.put("message", "successful");
+                    response.put("status", "200");
+                    response.put("response", match);
+                    return new ResponseEntity<>(response, HttpStatus.OK);
+                }
+                response.put("message", "you are not manager user or no user with this id or you not verified yet");
+                response.put("status", "404");
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
-            response.put("message", "you are not manager user or no user with this id or you not verified yet");
-            response.put("status", "404");
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            response.put("message" , "access token is expired please refresh it");
+            response.put("status" , "401");
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+
+        }catch (Exception e){
+            response.put("message" , e.getMessage());
+            response.put("status" , "401");
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
         }
-        response.put("message" , "access token is expired please refresh it");
-        response.put("status" , "401");
-        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
 
 
     }
@@ -97,30 +118,37 @@ public class MatchTableController {
     public ResponseEntity<?> editStadium(@RequestHeader(value = "Authorization") String access_token,
                                          @RequestBody Match match) {
         Map<String, Object> response = new HashMap<>();
-        if(!jwt.checkIfTokenIsExpired(access_token)) {
-            User manager = userService.verifyUser(jwt.userIdJWTExtraction(access_token));
-            if (manager != null && manager.getRole() == 1 && manager.getEmail_verified_at() != null) {
-                Match editedmatch = matchService.editMatch(match);
-                if (editedmatch != null) {
-                    response.put("message", "successful");
-                    response.put("status", "200");
-                    response.put("response", editedmatch);
-                    return new ResponseEntity<>(response, HttpStatus.OK);
+        try{
+            if(!jwt.checkIfTokenIsExpired(access_token)) {
+                User manager = userService.verifyUser(jwt.userIdJWTExtraction(access_token));
+                if (manager != null && manager.getRole() == 1 && manager.getEmail_verified_at() != null) {
+                    Match editedmatch = matchService.editMatch(match);
+                    if (editedmatch != null) {
+                        response.put("message", "successful");
+                        response.put("status", "200");
+                        response.put("response", editedmatch);
+                        return new ResponseEntity<>(response, HttpStatus.OK);
+                    }
+                    response.put("message", "this stadium wasn't found");
+                    response.put("status", "404");
+                    return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+
                 }
-                response.put("message", "this stadium wasn't found");
+                response.put("message", "you are not manager user or no user with this id or you not verified yet");
                 response.put("status", "404");
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-
             }
-            response.put("message", "you are not manager user or no user with this id or you not verified yet");
-            response.put("status", "404");
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+
+
+            response.put("message" , "access token is expired please refresh it");
+            response.put("status" , "401");
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+        }catch (Exception e){
+            response.put("message" , e.getMessage());
+            response.put("status" , "401");
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
         }
 
-
-        response.put("message" , "access token is expired please refresh it");
-        response.put("status" , "401");
-        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
     }
 
 
@@ -128,27 +156,33 @@ public class MatchTableController {
     public ResponseEntity<?> isFullReservations(@PathVariable("matchId") Long matchId){
 
         Map<String, Object> response = new HashMap<>();
+        try{
+            Match match = matchService.getMatchById(matchId);
+            if(match != null){
+                int numberOfTicketsInMatch = ticketService.getTicketsByMatchId(matchId).size();
+                int numberOfChairsInStadium = match.getStadium().getNumber_of_rows_in_vip() *
+                        match.getStadium().getNumber_seats_per_row();
+                if(numberOfTicketsInMatch < numberOfChairsInStadium){
 
-        Match match = matchService.getMatchById(matchId);
-        if(match != null){
-            int numberOfTicketsInMatch = ticketService.getTicketsByMatchId(matchId).size();
-            int numberOfChairsInStadium = match.getStadium().getNumber_of_rows_in_vip() *
-                    match.getStadium().getNumber_seats_per_row();
-            if(numberOfTicketsInMatch < numberOfChairsInStadium){
-
+                    response.put("message", "successful");
+                    response.put("status", "200");
+                    response.put("response", false);
+                    return new ResponseEntity<>(response, HttpStatus.OK);
+                }
                 response.put("message", "successful");
                 response.put("status", "200");
-                response.put("response", false);
+                response.put("response", true);
                 return new ResponseEntity<>(response, HttpStatus.OK);
             }
-            response.put("message", "successful");
-            response.put("status", "200");
-            response.put("response", true);
-            return new ResponseEntity<>(response, HttpStatus.OK);
+            response.put("message", "there is no match with this id");
+            response.put("status", "404");
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }catch (Exception e){
+            response.put("message" , e.getMessage());
+            response.put("status" , "401");
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
         }
-        response.put("message", "there is no match with this id");
-        response.put("status", "404");
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+
     }
 
 }

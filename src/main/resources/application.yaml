@@ -22,19 +22,22 @@ spring:
   # database config
   datasource:
     #containername:3306
-    url: jdbc:sqlserver://ticketeasy.database.windows.net:1433;database=ticket_easy;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;
+    url: jdbc:mysql://localhost:3306/world_cup?useSsl=true&serverTimezone=UTC
     #username and password in the container
-    username: elonsol
-    password: ticketEasy999$
-
-
+    username: root
+    password: Mosstafalover999$
+    driver-class-name: com.mysql.cj.jdbc.Driver
 
   # jpa config
   jpa:
     show-sql: true
     hibernate:
       ddl-auto: none
-      dialect: org.hibernate.dialect.SQLServer2012Dialect
+      use-new-id-generator-mappings: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        formate_sql: true
 
   data:
     rest:

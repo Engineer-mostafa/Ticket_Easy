@@ -36,48 +36,66 @@ public class StadiumController {
                                             @RequestParam(required = false, defaultValue = "0") int page) {
 
         Map<String, Object> response = new HashMap<>();
-        if(!jwt.checkIfTokenIsExpired(access_token)) {
-            User manager = userService.verifyUser(jwt.userIdJWTExtraction(access_token));
-            if (manager != null && manager.getRole() == 1 && manager.getEmail_verified_at() != null) {
-                List<Stadium> stadiums = IterableUtils.toList(stadiumService.getAllStaduims(PageRequest.of(page, size)));
 
-                response.put("message", "successful");
-                response.put("status", "200");
-                response.put("response", stadiums);
-                return new ResponseEntity<>(response, HttpStatus.OK);
+        try{
+            if(!jwt.checkIfTokenIsExpired(access_token)) {
+                User manager = userService.verifyUser(jwt.userIdJWTExtraction(access_token));
+                if (manager != null && manager.getRole() == 1 && manager.getEmail_verified_at() != null) {
+                    List<Stadium> stadiums = IterableUtils.toList(stadiumService.getAllStaduims(PageRequest.of(page, size)));
+
+                    response.put("message", "successful");
+                    response.put("status", "200");
+                    response.put("response", stadiums);
+                    return new ResponseEntity<>(response, HttpStatus.OK);
+                }
+
+                response.put("message", "you are not manager user or no user with this id or you not verified yet");
+                response.put("status", "404");
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
-
-            response.put("message", "you are not manager user or no user with this id or you not verified yet");
-            response.put("status", "404");
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            response.put("message" , "access token is expired please refresh it");
+            response.put("status" , "401");
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+        }catch (Exception e){
+            response.put("message" , e.getMessage());
+            response.put("status" , "401");
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
         }
-        response.put("message" , "access token is expired please refresh it");
-        response.put("status" , "401");
-        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+
 
     }
+
+
 
     @GetMapping("/{stadiumId}")
     public ResponseEntity<?> getStadiumById(@RequestHeader(value = "Authorization") String access_token,
                                             @PathVariable("stadiumId") Long stadiumId) {
         Map<String, Object> response = new HashMap<>();
-        if(!jwt.checkIfTokenIsExpired(access_token)) {
-            User manager = userService.verifyUser(jwt.userIdJWTExtraction(access_token));
-            if (manager != null && manager.getRole() == 1 && manager.getEmail_verified_at() != null) {
-                Stadium stadium = stadiumService.getStadiumById(stadiumId);
-                response.put("message", "successful");
-                response.put("status", "200");
-                response.put("response", stadium);
-                return new ResponseEntity<>(response, HttpStatus.OK);
+
+        try{
+            if(!jwt.checkIfTokenIsExpired(access_token)) {
+                User manager = userService.verifyUser(jwt.userIdJWTExtraction(access_token));
+                if (manager != null && manager.getRole() == 1 && manager.getEmail_verified_at() != null) {
+                    Stadium stadium = stadiumService.getStadiumById(stadiumId);
+                    response.put("message", "successful");
+                    response.put("status", "200");
+                    response.put("response", stadium);
+                    return new ResponseEntity<>(response, HttpStatus.OK);
+                }
+                response.put("message", "you are not manager user or no user with this id or you not verified yet");
+                response.put("status", "404");
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
-            response.put("message", "you are not manager user or no user with this id or you not verified yet");
-            response.put("status", "404");
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+
+            response.put("message" , "access token is expired please refresh it");
+            response.put("status" , "401");
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+        }catch (Exception e){
+            response.put("message" , e.getMessage());
+            response.put("status" , "401");
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
         }
 
-        response.put("message" , "access token is expired please refresh it");
-        response.put("status" , "401");
-        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
 
     }
 
@@ -86,54 +104,72 @@ public class StadiumController {
     public ResponseEntity<?> addNewStadium(@RequestHeader(value = "Authorization") String access_token,
                                            @RequestBody CreateStadiumForm stadiumForm) {
         Map<String, Object> response = new HashMap<>();
-        System.out.println(access_token);
-        if(!jwt.checkIfTokenIsExpired(access_token)) {
-            User manager = userService.verifyUser(jwt.userIdJWTExtraction(access_token));
-            if (manager != null && manager.getRole() == 1 && manager.getEmail_verified_at() != null) {
-                Stadium stadium = stadiumService.saveNewStadium(stadiumForm);
-                response.put("message", "successful");
-                response.put("status", "200");
-                response.put("response", stadium);
-                return new ResponseEntity<>(response, HttpStatus.OK);
+
+        try{
+            System.out.println(access_token);
+            if(!jwt.checkIfTokenIsExpired(access_token)) {
+                User manager = userService.verifyUser(jwt.userIdJWTExtraction(access_token));
+                if (manager != null && manager.getRole() == 1 && manager.getEmail_verified_at() != null) {
+                    Stadium stadium = stadiumService.saveNewStadium(stadiumForm);
+                    response.put("message", "successful");
+                    response.put("status", "200");
+                    response.put("response", stadium);
+                    return new ResponseEntity<>(response, HttpStatus.OK);
+                }
+                response.put("message", "you are not manager user or no user with this id or you not verified yet");
+                response.put("status", "404");
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
-            response.put("message", "you are not manager user or no user with this id or you not verified yet");
-            response.put("status", "404");
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            response.put("message" , "access token is expired please refresh it");
+            response.put("status" , "401");
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+        }catch (Exception e){
+            response.put("message" , e.getMessage());
+            response.put("status" , "401");
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
         }
-        response.put("message" , "access token is expired please refresh it");
-        response.put("status" , "401");
-        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+
 
 
     }
+
+
 
     @PutMapping("/edit")
     public ResponseEntity<?> editStadium(@RequestHeader(value = "Authorization") String access_token,
                                          @RequestBody Stadium stadium) {
         Map<String, Object> response = new HashMap<>();
-        if(!jwt.checkIfTokenIsExpired(access_token)) {
-            User manager = userService.verifyUser(jwt.userIdJWTExtraction(access_token));
-            if (manager != null && manager.getRole() == 1 && manager.getEmail_verified_at() != null) {
-                Stadium editedStadium = stadiumService.editStadium(stadium);
-                if (editedStadium != null) {
-                    response.put("message", "successful");
-                    response.put("status", "200");
-                    response.put("response", editedStadium);
-                    return new ResponseEntity<>(response, HttpStatus.OK);
+
+        try{
+            if(!jwt.checkIfTokenIsExpired(access_token)) {
+                User manager = userService.verifyUser(jwt.userIdJWTExtraction(access_token));
+                if (manager != null && manager.getRole() == 1 && manager.getEmail_verified_at() != null) {
+                    Stadium editedStadium = stadiumService.editStadium(stadium);
+                    if (editedStadium != null) {
+                        response.put("message", "successful");
+                        response.put("status", "200");
+                        response.put("response", editedStadium);
+                        return new ResponseEntity<>(response, HttpStatus.OK);
+                    }
+                    response.put("message", "this stadium wasn't found");
+                    response.put("status", "404");
+                    return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+
                 }
-                response.put("message", "this stadium wasn't found");
+                response.put("message", "you are not manager user or no user with this id or you not verified yet");
                 response.put("status", "404");
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-
             }
-            response.put("message", "you are not manager user or no user with this id or you not verified yet");
-            response.put("status", "404");
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+
+
+            response.put("message" , "access token is expired please refresh it");
+            response.put("status" , "401");
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+        }catch (Exception e){
+            response.put("message" , e.getMessage());
+            response.put("status" , "401");
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
         }
 
-
-        response.put("message" , "access token is expired please refresh it");
-        response.put("status" , "401");
-        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
     }
 }

@@ -48,6 +48,22 @@ public class ExtractJWT {
     }
 
 
+    public String endAccessTokenTime(String accessToken , HttpServletRequest request){
+        String token = accessToken.substring((secProperties.getBearer() + " ").length());
+        // check algorithm that hash with
+        JWTVerifier verifier = JWT.require(_algorithm).build();
+        DecodedJWT decodedJWT = verifier.verify(token);
+
+        return JWT.create()
+                .withSubject(decodedJWT.getSubject())
+                .withExpiresAt(new Date(System.currentTimeMillis() - 30 * 60 * 1000)) //expire after 30 minutes
+                .withIssuer(request.getRequestURL().toString())
+                .withClaim("id",  Long.valueOf(decodedJWT.getSubject()))
+                .withClaim("role",  decodedJWT.getClaim("role").asString())
+                .withClaim("isVerified",  decodedJWT.getClaim("isVerified").asBoolean())
+                .withClaim("username", decodedJWT.getClaim("username").asInt())
+                .sign(_algorithm);
+    }
 
 
     public String creatAccessToken(String userId, String username, int role , boolean isVerified,

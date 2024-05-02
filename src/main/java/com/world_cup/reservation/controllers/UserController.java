@@ -2,6 +2,7 @@ package com.world_cup.reservation.controllers;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.world_cup.reservation.models.EditModelUser;
 import com.world_cup.reservation.models.LoginFormUser;
 import com.world_cup.reservation.models.SignupFormUser;
 import com.world_cup.reservation.models.User;
@@ -84,31 +85,38 @@ public class UserController {
 
         Map<String, String> response = new HashMap<>();
 
-        System.out.println("Signup");
-        signupFormUser.setNationality(signupFormUser.getNationality() == null? null : signupFormUser.getNationality());
+        try{
+            System.out.println("Signup");
+            signupFormUser.setNationality(signupFormUser.getNationality() == null? null : signupFormUser.getNationality());
 
 
 
-        User user;
-        ObjectMapper mapper = new ObjectMapper();
-        user = mapper.convertValue(signupFormUser , User.class);
-        user = userService.saveNewUser(user);
+            User user;
+            ObjectMapper mapper = new ObjectMapper();
+            user = mapper.convertValue(signupFormUser , User.class);
+            user = userService.saveNewUser(user);
 
-        String access_token = jwt.creatAccessToken(String.valueOf(user.getId()) , user.getUsername(),user.getRole() , false , request);
-        String refresh_token = jwt.createRefreshToken(String.valueOf(user.getId()) , user.getUsername() , request);
+            String access_token = jwt.creatAccessToken(String.valueOf(user.getId()) , user.getUsername(),user.getRole() , false , request);
+            String refresh_token = jwt.createRefreshToken(String.valueOf(user.getId()) , user.getUsername() , request);
 
-        if(user != null ){
-            response = jwt.getTokensAsJson(access_token , refresh_token);
-            response.put("message", "successful");
-            response.put("Bad Request" , "200");
-            return new ResponseEntity<>(response, HttpStatus.OK);
+            if(user != null ){
+                response = jwt.getTokensAsJson(access_token , refresh_token);
+                response.put("message", "successful");
+                response.put("Bad Request" , "200");
+                return new ResponseEntity<>(response, HttpStatus.OK);
 
 
+            }
+
+            response.put("message", "this user values are invalid check them again");
+            response.put("Bad Request" , "400");
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+
+        }catch (Exception e){
+            response.put("message" , e.getMessage());
+            response.put("status" , "401");
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
         }
-
-        response.put("message", "this user values are invalid check them again");
-        response.put("Bad Request" , "400");
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
 
     }
 
@@ -121,19 +129,27 @@ public class UserController {
         User user = userService.login(lfUser.getEmail() , lfUser.getPassword());
         Map<String, String> response = new HashMap<>();
 //        System.out.println(user);
-        if(user != null){
-            String access_token = jwt.creatAccessToken(String.valueOf(user.getId()) , user.getUsername() , user.getRole(), user.getEmail_verified_at()!=null ? true : false , request);
-            String refresh_token = jwt.createRefreshToken(String.valueOf(user.getId()) , user.getUsername() , request);
 
-            response = jwt.getTokensAsJson(access_token , refresh_token);
-            response.put("message" , "successful");
-            response.put("status" , "200");
-            return new ResponseEntity<>(response, HttpStatus.OK);
+        try{
+            if(user != null){
+                String access_token = jwt.creatAccessToken(String.valueOf(user.getId()) , user.getUsername() , user.getRole(), user.getEmail_verified_at()!=null ? true : false , request);
+                String refresh_token = jwt.createRefreshToken(String.valueOf(user.getId()) , user.getUsername() , request);
+
+                response = jwt.getTokensAsJson(access_token , refresh_token);
+                response.put("message" , "successful");
+                response.put("status" , "200");
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            }
+
+            response.put("message" , "this user wasn't found");
+            response.put("status" , "404");
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }catch (Exception e){
+            response.put("message" , e.getMessage());
+            response.put("status" , "401");
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
         }
 
-        response.put("message" , "this user wasn't found");
-        response.put("status" , "404");
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
 
 
@@ -144,27 +160,39 @@ public class UserController {
             @PathVariable("userId") Long userId){
 
         Map<String, Object> response = new HashMap<>();
-        if(!jwt.checkIfTokenIsExpired(access_token)) {
+        try{
+            if(!jwt.checkIfTokenIsExpired(access_token)) {
 
-            User admin = userService.verifyUser(jwt.userIdJWTExtraction(access_token));
-            if (admin != null && admin.getRole() == 0 && admin.getEmail_verified_at() != null) {
-                User user = userService.verifyUser(userId);
+                User admin = userService.verifyUser(jwt.userIdJWTExtraction(access_token));
+                if (admin != null && admin.getRole() == 0 && admin.getEmail_verified_at() != null) {
+                    User user = userService.verifyUser(userId);
 
-                if (user != null) {
-                    response.put("message" , "successful");
-                    response.put("status" , "200");
-                    response.put("response" , user);
-                    return new ResponseEntity<>(response, HttpStatus.OK);
+                    if (user != null) {
+                        response.put("message" , "successful");
+                        response.put("status" , "200");
+                        response.put("response" , user);
+                        return new ResponseEntity<>(response, HttpStatus.OK);
+                    }
+                    else{
+                        response.put("message" , "no user with this id");
+                        response.put("status" , "404");
+                        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+                    }
                 }
-            }
 
-            response.put("message" , "you are not admin");
-            response.put("status" , "404");
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+                response.put("message" , "you are not admin");
+                response.put("status" , "404");
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            }
+            response.put("message" , "access token is expired please refresh it");
+            response.put("status" , "401");
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+        }catch (Exception e){
+            response.put("message" , e.getMessage());
+            response.put("status" , "401");
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
         }
-        response.put("message" , "access token is expired please refresh it");
-        response.put("status" , "401");
-        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+
     }
 
 
@@ -175,23 +203,32 @@ public class UserController {
             ){
 
         Map<String, String> response = new HashMap<>();
-        if(!jwt.checkIfTokenIsExpired(refreshToken)) {
-            String username = jwt.refreshAccessToken(refreshToken);
-            User user = userService.getUserByUsername(username);
-            String access_token = jwt.creatAccessToken(user.getId().toString() , user.getUsername() , user.getRole() , user.getEmail_verified_at() != null ? true : false , request);
-            String rtoken = refreshToken.substring((secProperties.getBearer() + " ").length());
 
-            response.put("access_token" , access_token);
-            response.put("refresh_token" , rtoken);
-            response.put("message" , "successful");
-            response.put("status" , "200");
 
-            return new ResponseEntity<>(response, HttpStatus.OK);
+        try{
+            if(!jwt.checkIfTokenIsExpired(refreshToken)) {
+                String username = jwt.refreshAccessToken(refreshToken);
+                User user = userService.getUserByUsername(username);
+                String access_token = jwt.creatAccessToken(user.getId().toString() , user.getUsername() , user.getRole() , user.getEmail_verified_at() != null ? true : false , request);
+                String rtoken = refreshToken.substring((secProperties.getBearer() + " ").length());
 
+                response.put("access_token" , access_token);
+                response.put("refresh_token" , rtoken);
+                response.put("message" , "successful");
+                response.put("status" , "200");
+
+                return new ResponseEntity<>(response, HttpStatus.OK);
+
+            }
+            response.put("message" , "refresh token also expired please login again");
+            response.put("status" , "401");
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+
+        }catch (Exception e){
+            response.put("message" , e.getMessage());
+            response.put("status" , "401");
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
         }
-        response.put("message" , "refresh token also expired please login again");
-        response.put("status" , "401");
-        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
 
 
     }
@@ -202,28 +239,36 @@ public class UserController {
 
 
         Map<String, String> response = new HashMap<>();
-        if(!jwt.checkIfTokenIsExpired(access_token)) {
-            User admin = userService.verifyUser(jwt.userIdJWTExtraction(access_token));
-            if(admin != null && admin.getRole() == 0 && admin.getEmail_verified_at() != null){
-                boolean isDeleted = userService.deleteUserById(userId);
-                if(isDeleted){
-                    response.put("message" , "Deleted Successfully");
-                    return new ResponseEntity<>(response, HttpStatus.OK);
+
+        try{
+            if(!jwt.checkIfTokenIsExpired(access_token)) {
+                User admin = userService.verifyUser(jwt.userIdJWTExtraction(access_token));
+                if(admin != null && admin.getRole() == 0 && admin.getEmail_verified_at() != null){
+                    boolean isDeleted = userService.deleteUserById(userId);
+                    if(isDeleted){
+                        response.put("message" , "Deleted Successfully");
+                        return new ResponseEntity<>(response, HttpStatus.OK);
+                    }
+                    response.put("message" , "this user wasn't found");
+                    response.put("status" , "404");
+
+                    return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+
                 }
-                response.put("message" , "this user wasn't found");
+                response.put("message" , "this admin wasn't found");
                 response.put("status" , "404");
-
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-
             }
-            response.put("message" , "this admin wasn't found");
-            response.put("status" , "404");
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-        }
 
-        response.put("message" , "access token is expired please refresh it");
-        response.put("status" , "401");
-        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+            response.put("message" , "access token is expired please refresh it");
+            response.put("status" , "401");
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+
+        }catch (Exception e){
+            response.put("message" , e.getMessage());
+            response.put("status" , "401");
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+        }
 
     }
 
@@ -232,44 +277,89 @@ public class UserController {
     public ResponseEntity<?> getUserByUserName(@RequestHeader(value = "Authorization") String access_token,
                                                @PathVariable("username") String username){
         Map<String, Object> response = new HashMap<>();
-        if(!jwt.checkIfTokenIsExpired(access_token)) {
-            User profile = userService.getUserByUsername(username);
-            if(profile != null){
-                response.put("message" , "fetched  Successfully");
-                response.put("response", profile);
-                response.put("status" , "200");
-                return new ResponseEntity<>(response, HttpStatus.OK);
+
+        try{
+            if(!jwt.checkIfTokenIsExpired(access_token)) {
+                User profile = userService.getUserByUsername(username);
+                if(profile != null){
+                    response.put("message" , "fetched  Successfully");
+                    response.put("response", profile);
+                    response.put("status" , "200");
+                    return new ResponseEntity<>(response, HttpStatus.OK);
+                }
+                response.put("status" , "404");
+                response.put("message" , "Not found this user");
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
             }
-            response.put("status" , "404");
-            response.put("message" , "Not found this user");
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            response.put("message" , "access token is expired please refresh it");
+            response.put("status" , "401");
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+        }catch (Exception e){
+            response.put("message" , e.getMessage());
+            response.put("status" , "401");
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
         }
-        response.put("message" , "access token is expired please refresh it");
-        response.put("status" , "401");
-        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+
     }
 
     @PutMapping("/profile/edit")
     public ResponseEntity<?> editMydata(@RequestHeader(value = "Authorization") String access_token,
-                                        @RequestBody User user){
+                                        @RequestBody EditModelUser user){
         Map<String, Object> response = new HashMap<>();
-        if(!jwt.checkIfTokenIsExpired(access_token)) {
-          User expectedUser = userService.verifyUser(user.getId());
-          if(expectedUser != null){
-              expectedUser = userService.updateMyData(user);
-              response.put("message" , "fetched  Successfully");
-              response.put("response", expectedUser);
-              response.put("status" , "200");
-              return new ResponseEntity<>(response, HttpStatus.OK);
-          }
-            response.put("status" , "404");
-            response.put("message" , "Not found this user");
-            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        try{
+            if(!jwt.checkIfTokenIsExpired(access_token)) {
+                User expectedUser = userService.getUserById(user.getId());
+                ObjectMapper mapper = new ObjectMapper();
+//                expectedUser = mapper.convertValue(user , User.class);
+                if(expectedUser != null){
+                    User updatedUser = userService.updateMyData( expectedUser , user);
+
+                    if(updatedUser != null){
+                        response.put("message" , "fetched  Successfully");
+                        response.put("response", expectedUser);
+                        response.put("status" , "200");
+                        return new ResponseEntity<>(response, HttpStatus.OK);
+                    }
+                    else {
+                        response.put("message" , "fetched  error check fields again");
+                        response.put("status" , "500");
+                        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+                    }
+
+                }
+                response.put("status" , "404");
+                response.put("message" , "Not found this user");
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            }
+            response.put("message" , "access token is expired please refresh it");
+            response.put("status" , "401");
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+
+        }catch (Exception e){
+            response.put("message" , e.getMessage());
+            response.put("status" , "500");
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        response.put("message" , "access token is expired please refresh it");
-        response.put("status" , "401");
-        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+
     }
 
 
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestHeader(value = "Authorization" ) String access_toke ,HttpServletRequest request){
+
+        Map<String, Object> response = new HashMap<>();
+
+        try{
+            String endedAccessToken = jwt.endAccessTokenTime(access_toke , request);
+            response.put("message" , "logged out successfully");
+            response.put("status" , "200");
+            response.put("endded access token" , endedAccessToken);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        }catch (Exception e){
+            response.put("message" , e.getMessage());
+            response.put("status" , "401");
+            return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+        }
+
+    }
 }
